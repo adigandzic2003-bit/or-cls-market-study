@@ -3,6 +3,7 @@ from .models import CostCurve
 import numpy as np
 import math
 
+
 def normalized_aggregator_cost(
     max_flex_kw: float, full_cost_eur: float, factor: float) -> CostCurve:
     """Create a nonlinear cost function for an aggregator.
@@ -42,6 +43,7 @@ def normalized_aggregator_cost(
             return full_cost_eur * (q_kw/max_flex_kw)**factor
 
     return cost
+
 
 def exponential_aggregator_cost(
     a: float, b: float, p_nom_kw: float, p_min_kw: float) -> CostCurve:
@@ -106,7 +108,6 @@ def normalized_aggregator_cap_cost(
     return cost
 
 
-
 def normalized_dso_cost(
     network_limit_kw: float, reference_overload_kw: float, full_cost_eur: float,
         factor: float) -> CostCurve:
@@ -158,6 +159,7 @@ def normalized_dso_cost(
 
     return cost
 
+
 def exponential_dso_cost(alpha: float, beta: float, gamma: float) -> CostCurve:
     """Create an exponential DSO cost curve based on Heinrich et al. (Eq. 17).
 
@@ -193,6 +195,7 @@ def exponential_dso_cost(alpha: float, beta: float, gamma: float) -> CostCurve:
         return float(result)
 
     return cost
+
 
 def validate_finite(**parameters: float) -> None:
     """Reject NaN and infinite parameter values."""
