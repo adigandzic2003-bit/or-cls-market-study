@@ -1,7 +1,7 @@
 """Reproducible toy markets first; controlled scarcity scenarios later."""
 
-from .models import MarketScenario
-
+from .models import MarketScenario, Aggregator
+from .curves import normalized_aggregator_cap_cost, normalized_dso_cost
 
 def make_toy_scenario() -> MarketScenario:
     """Prepare a tiny hand-solvable CLS example.
@@ -12,8 +12,10 @@ def make_toy_scenario() -> MarketScenario:
     TODO S04: Record expected optimum in docs/04_HAND_CALCULATIONS.md.
     TODO S05: Keep all inputs deterministic until the basic tests pass.
     """
-    raise NotImplementedError("TODO S01-S05: create the first toy market")
-
+    a = Aggregator(
+        aggregator_id="Agg 1", p_min_kw=100, p_nom_kw=150, true_cost=cost_a, offer_cost=cost_a)
+    b = Aggregator(100.0, 150.0, 100.0, 100.0)
+    m = MarketScenario()
 
 def make_scarcity_scenarios() -> list[MarketScenario]:
     """Change market concentration and flexibility while controlling costs.
