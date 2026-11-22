@@ -52,17 +52,21 @@ class Aggregator:
 
 @dataclass(frozen=True)
 class DSO:
-    """Distribution system operator with a network operating-cost curve.
+    """Distribution operator for ONE local network segment in a CLS auction.
 
-    cost accepts the SUM of contracted caps [kW] and returns cost [EUR].
-    network_limit_kw is optional reference-capacity metadata for experiments;
-    it is not a hard feasibility constraint and does not modify the cost curve.
-    The cost-curve factory must receive any required network parameters itself.
+    cost accepts the sum of all contracted aggregator caps [kW] and returns
+    operating costs [EUR] for the common contract horizon.
+
+    network_limit_kw (K) and reference_overload_kw (R) are optional metadata
+    describing the local *cost model* reference point S=K+R. K is NOT a hard
+    feasibility cap and neither field changes the supplied callable.
+    DSO(lambda total: total) remains valid for existing tests and toy cases.
     """
 
     cost: CostCurve
     dso_id: str = "DSO"
     network_limit_kw: float | None = None
+    reference_overload_kw: float | None = None
 
     def __post_init__(self) -> None:
         if not callable(self.cost):
@@ -71,6 +75,21 @@ class DSO:
             raise ValueError("dso_id must be a nonempty string")
         if self.network_limit_kw is not None:
             _validate_nonnegative_power("network_limit_kw", self.network_limit_kw)
+        if self.reference_overload_kw is not None:
+            _validate_nonnegative_power("reference_overload_kw", self.reference_overload_kw)
+            if self.reference_overload_kw <= 0:
+                raise ValueError("reference_overload_kw must be positive")
+            if self.network_limit_kw is None:
+                raise ValueError("reference_overload_kw requires network_limit_kw")
+            if not math.isfinite(self.network_limit_kw + self.reference_overload_kw):
+                raise ValueError("Reference total caps exceed numeric limits")
+
+    @property
+    def reference_total_caps_kw(self) -> float | None:
+        """Reference point K+R, if both metadata values are supplied."""
+        if self.network_limit_kw is None or self.reference_overload_kw is None:
+            return None
+        return self.network_limit_kw + self.reference_overload_kw
 
 
 @dataclass(frozen=True)
