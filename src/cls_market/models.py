@@ -1,49 +1,102 @@
-
-"""Data contracts for the CLS market; not the auction algorithms."""
+"""Data contracts for CLS markets; auction algorithms live in separate modules."""
 
 from collections.abc import Callable
 from dataclasses import dataclass
+import math
 
+# Every aggregator curve accepts a contracted power cap [kW] and returns cost [EUR].
+# A DSO curve accepts the sum of contracted caps [kW] and returns cost [EUR].
 CostCurve = Callable[[float], float]
+
+
+def _validate_nonnegative_power(name: str, value: float) -> None:
+    """Require a finite, nonnegative power value in kW."""
+    if isinstance(value, bool):
+        raise ValueError(f"{name} must be a finite, nonnegative number")
+    try:
+        valid = math.isfinite(value) and value >= 0
+    except (TypeError, ValueError, OverflowError):
+        valid = False
+    if not valid:
+        raise ValueError(f"{name} must be a finite, nonnegative number")
 
 
 @dataclass(frozen=True)
 class Aggregator:
-    """One aggregator participating in the CLS market.
+    """One CLS participant with a feasible cap interval and two cost curves.
 
-    TODO M01: Validate p_min_kw < p_nom_kw.
-    TODO M02: Validate finite and nonnegative power values.
-    TODO M03: Distinguish true costs from reported offers.
-    TODO M04: Verify cost curve behavior and units.
+    true_cost represents actual provision costs; offer_cost is the reported bid
+    used by the allocation optimizer. They may coincide in truthful scenarios.
+    Each curve takes P_lim [kW] and returns cost [EUR].
+
+    Curve shape, normalization and economic calibration are model assumptions
+    validated separately; the data contract checks only structural invariants.
     """
+
     aggregator_id: str
     p_min_kw: float
     p_nom_kw: float
     true_cost: CostCurve
     offer_cost: CostCurve
 
+    def __post_init__(self) -> None:
+        if not isinstance(self.aggregator_id, str) or not self.aggregator_id.strip():
+            raise ValueError("aggregator_id must be a nonempty string")
+        _validate_nonnegative_power("p_min_kw", self.p_min_kw)
+        _validate_nonnegative_power("p_nom_kw", self.p_nom_kw)
+        if self.p_min_kw >= self.p_nom_kw:
+            raise ValueError("Require 0 <= p_min_kw < p_nom_kw")
+        if not callable(self.true_cost) or not callable(self.offer_cost):
+            raise TypeError("true_cost and offer_cost must be callable")
+
 
 @dataclass(frozen=True)
 class DSO:
-    """Distribution system operator.
+    """Distribution system operator with a network operating-cost curve.
 
-    TODO M05: Document network capacity assumptions.
-    TODO M06: Verify DSO cost curve behavior.
+    cost accepts the SUM of contracted caps [kW] and returns cost [EUR].
+    network_limit_kw is optional reference-capacity metadata for experiments;
+    it is not a hard feasibility constraint and does not modify the cost curve.
+    The cost-curve factory must receive any required network parameters itself.
     """
+
     cost: CostCurve
+    dso_id: str = "DSO"
+    network_limit_kw: float | None = None
+
+    def __post_init__(self) -> None:
+        if not callable(self.cost):
+            raise TypeError("DSO cost must be callable")
+        if not isinstance(self.dso_id, str) or not self.dso_id.strip():
+            raise ValueError("dso_id must be a nonempty string")
+        if self.network_limit_kw is not None:
+            _validate_nonnegative_power("network_limit_kw", self.network_limit_kw)
 
 
 @dataclass(frozen=True)
 class MarketScenario:
-    """One market scenario with any number of aggregators.
+    """One CLS auction with one DSO and an ordered set of aggregators.
 
-    TODO M07: Require at least one aggregator.
-    TODO M08: Check unique aggregator IDs.
-    TODO M09: Validate scenario consistency.
+    A multi-DSO experiment uses multiple scenarios; modeling more than one
+    DSO in the same auction would require a different network allocation model.
     """
+
     name: str
     aggregators: tuple[Aggregator, ...]
     dso: DSO
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.name, str) or not self.name.strip():
+            raise ValueError("Scenario name must be a nonempty string")
+        if not isinstance(self.aggregators, tuple) or not self.aggregators:
+            raise ValueError("aggregators must be a nonempty tuple")
+        if any(not isinstance(agg, Aggregator) for agg in self.aggregators):
+            raise TypeError("All scenario participants must be Aggregator instances")
+        ids = [agg.aggregator_id for agg in self.aggregators]
+        if len(ids) != len(set(ids)):
+            raise ValueError("Aggregator IDs must be unique within a scenario")
+        if not isinstance(self.dso, DSO):
+            raise TypeError("dso must be a DSO instance")
 
 
 @dataclass(frozen=True)
