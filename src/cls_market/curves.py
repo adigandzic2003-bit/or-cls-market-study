@@ -74,7 +74,9 @@ def exponential_aggregator_cost(
         if p_lim_kw < p_min_kw or p_lim_kw > p_nom_kw:
             raise ValueError("Invalid capacity limit!")
 
-        return float(a * np.exp(b * p_lim_kw) + c)
+        result = float(a * np.exp(b * p_lim_kw) + c)
+        validate_finite(result=result)
+        return result
 
     return cost
 
@@ -155,6 +157,7 @@ def normalized_dso_cost(
 
         #C(S) = B * (max(0, S - K) / R) ** factor
         curve = full_cost_eur * ((max(0, total_caps_kw - network_limit_kw)) / reference_overload_kw)**factor
+        validate_finite(curve=curve)
         return float(curve)
 
     return cost
@@ -189,9 +192,7 @@ def exponential_dso_cost(alpha: float, beta: float, gamma: float) -> CostCurve:
 
         result = alpha * np.exp(beta * total_caps_kw) + gamma
 
-        if not np.isfinite(result):
-            raise OverflowError("DSO cost exceeds numerical limits!")
-
+        validate_finite(result=result)
         return float(result)
 
     return cost
