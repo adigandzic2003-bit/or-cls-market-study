@@ -1,31 +1,41 @@
 """Toy cost-curve factories. Their economic specification is student work."""
-from scipy.stats import false_discovery_control
-
 from .models import CostCurve
 import numpy as np
 
 def normalized_aggregator_cost(
     max_flex_kw: float, full_cost_eur: float, factor: float) -> CostCurve:
+    """Create a nonlinear cost function for an aggregator.
 
+    Costs increase with the contracted flexibility q according to
+    C(q) = B * (q / F) ** factor.
+
+    F: Maximum available flexibility (kW).
+    B: Cost of providing full flexibility (EUR).
+    factor: Cost curve exponent (1 to 3).
+        -> TODO: Validate requirement factor between 1 and 3!
+
+    Returns a callable that calculates costs for 0 <= q <= F.
+    """
+
+    if max_flex_kw <= 0 or full_cost_eur < 0 or (factor < 1 or factor > 3):
+        raise ValueError("Invalid cost parameters!")
 
     def cost(q_kw: float) -> float:
+        """Calculate the aggregator's cost for a given flexibility quantity.
 
-        if max_flex_kw > 0 and full_cost_eur >= 0:
-            """Return a simplified cost of tightening a contractual power cap.
-    
-            TODO C01:
-            1. Derive c(P_lim) = marginal_cost * (P_nom - P_lim) on paper.
-            2. Verify units: EUR/kW times kW equals EUR.
-            3. Validate both parameters and decide how to handle invalid caps.
-            4. Check the nominal cap gives zero cost and tighter caps cost more.
-            5. Explain why this is NOT Heinrich's optimized EV charging-cost curve.
-            6. Implement the returned callable and test three hand-calculated cases.
-            """
-            return full_cost_eur * (q_kw/max_flex_kw)**factor
+        Args:
+            q_kw: Contracted flexibility in kW (0 <= q_kw <= max_flex_kw).
 
-        else:
+        Returns:
+            Total flexibility provision cost in EUR.
+
+        Raises:
+            ValueError: If q_kw exceeds the available flexibility range.
+        """
+        if q_kw < 0 or q_kw > max_flex_kw:
             raise ValueError("Invalid cost parameters!")
-
+        else:
+            return full_cost_eur * (q_kw/max_flex_kw)**factor
 
     return cost
 
