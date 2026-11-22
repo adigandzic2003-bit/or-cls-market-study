@@ -1,20 +1,21 @@
+
 """Data contracts for the CLS market; not the auction algorithms."""
 
 from collections.abc import Callable
 from dataclasses import dataclass
 
-# Every cost curve takes a contracted power cap [kW] and returns cost [EUR].
 CostCurve = Callable[[float], float]
 
 
 @dataclass(frozen=True)
 class Aggregator:
-    """Aggregator with nominal and minimum contractual limits and two cost curves.
+    """One aggregator participating in the CLS market.
 
-    TODO: Explain why actual costs and reported bids must be separate.
-    TODO: Decide whether cost curves are monotone and zero at nominal power.
+    TODO M01: Validate p_min_kw < p_nom_kw.
+    TODO M02: Validate finite and nonnegative power values.
+    TODO M03: Distinguish true costs from reported offers.
+    TODO M04: Verify cost curve behavior and units.
     """
-
     aggregator_id: str
     p_min_kw: float
     p_nom_kw: float
@@ -24,19 +25,22 @@ class Aggregator:
 
 @dataclass(frozen=True)
 class DSO:
-    """DSO operating cost as a function of the SUM of contracted power caps.
+    """Distribution system operator.
 
-    Network capacity may enter this cost function, but is not automatically
-    a hard feasibility constraint. See docs/02_MODEL_SPEC.md.
+    TODO M05: Document network capacity assumptions.
+    TODO M06: Verify DSO cost curve behavior.
     """
-
     cost: CostCurve
 
 
 @dataclass(frozen=True)
 class MarketScenario:
-    """One CLS auction and one common contract horizon."""
+    """One market scenario with any number of aggregators.
 
+    TODO M07: Require at least one aggregator.
+    TODO M08: Check unique aggregator IDs.
+    TODO M09: Validate scenario consistency.
+    """
     name: str
     aggregators: tuple[Aggregator, ...]
     dso: DSO
@@ -44,8 +48,11 @@ class MarketScenario:
 
 @dataclass(frozen=True)
 class Allocation:
-    """Chosen power caps keyed by aggregator ID."""
+    """Optimized power limits.
 
+    TODO M10: Check allocation feasibility.
+    TODO M11: Ensure deterministic aggregator mapping.
+    """
     limits_kw: dict[str, float]
     reported_objective_eur: float
     solver_message: str = ""
@@ -53,6 +60,8 @@ class Allocation:
 
 @dataclass(frozen=True)
 class Payments:
-    """Positive values mean payment to an aggregator, in EUR."""
+    """Payments to participating aggregators.
 
+    TODO M12: Validate payment IDs and finite values.
+    """
     to_aggregators_eur: dict[str, float]
