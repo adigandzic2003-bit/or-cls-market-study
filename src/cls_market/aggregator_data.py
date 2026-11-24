@@ -3,7 +3,6 @@
 CSV files are the source of truth. No random values are generated at load time.
 Do not use these hypothetical profiles as empirical observations of Germany.
 """
-
 from __future__ import annotations
 
 import csv
