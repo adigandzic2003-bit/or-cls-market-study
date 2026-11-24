@@ -37,6 +37,7 @@ def normalized_aggregator_cost(
         """
 
         validate_finite(q_kw=q_kw)
+
         if q_kw < 0 or q_kw > max_flex_kw:
             raise ValueError("Invalid cost parameters!")
         else:
@@ -152,6 +153,7 @@ def normalized_dso_cost(
         """
 
         validate_finite(total_caps_kw=total_caps_kw)
+
         if total_caps_kw < 0:
             raise ValueError("Invalid total capacity!")
 
