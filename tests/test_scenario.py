@@ -46,7 +46,7 @@ def test_random_scenario():
         print("Total minimal power:", total_minimum_kw)
         print("DSO network limit:", network_limit_kw)
 
-        if total_minimum_kw <= network_limit_kw and network_limit_kw <= total_nominal_kw:
+        if total_minimum_kw <= network_limit_kw <= total_nominal_kw:
             break
 
         seed += 1

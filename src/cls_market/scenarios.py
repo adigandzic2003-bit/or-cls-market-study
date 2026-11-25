@@ -1,6 +1,7 @@
 """Reproducible toy markets first; controlled scarcity scenarios later."""
 
 import random
+from operator import truediv
 
 from .models import MarketScenario
 from .aggregator_data import sample_aggregators
@@ -50,3 +51,16 @@ def make_scarcity_scenarios() -> list[MarketScenario]:
     TODO S11: Save inputs and random seeds before running any large study.
     """
     raise NotImplementedError("TODO S06-S11: build controlled scenario pairs")
+
+def is_compatible(market: MarketScenario) -> bool:
+    """Check whether a market scenario is compatible based on capacities"""
+
+    total_nominal_kw = sum(agg.p_nom_kw for agg in market.aggregators)
+    total_minimum_kw = sum(agg.p_min_kw for agg in market.aggregators)
+    network_limit_kw = market.dso.network_limit_kw
+
+    print("Total nominal power:", total_nominal_kw)
+    print("Total minimal power:", total_minimum_kw)
+    print("DSO network limit:", network_limit_kw)
+
+    return total_minimum_kw <= network_limit_kw <= total_nominal_kw
