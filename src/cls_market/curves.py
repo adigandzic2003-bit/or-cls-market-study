@@ -20,6 +20,7 @@ def normalized_aggregator_cost(
     """
 
     validate_finite(max_flex_kw=max_flex_kw, full_cost_eur=full_cost_eur, factor=factor)
+
     if max_flex_kw <= 0 or full_cost_eur < 0 or (factor < 1 or factor > 3):
         raise ValueError("Invalid cost parameters!")
 
@@ -94,9 +95,7 @@ def normalized_aggregator_cap_cost(
 
     max_flex_kw = p_nom_kw - p_min_kw
 
-    flex_cost = normalized_aggregator_cost(
-        max_flex_kw, full_cost_eur, factor
-    )
+    flex_cost = normalized_aggregator_cost(max_flex_kw, full_cost_eur, factor)
 
     def cost(p_lim_kw: float) -> float:
         validate_finite(p_lim_kw=p_lim_kw)

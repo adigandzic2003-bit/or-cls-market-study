@@ -1,7 +1,10 @@
 """Reproducible toy markets first; controlled scarcity scenarios later."""
 
-from .models import MarketScenario, Aggregator
-from .curves import normalized_aggregator_cap_cost, normalized_dso_cost
+import random
+
+from .models import MarketScenario
+from .aggregator_data import sample_aggregators
+from .dso_data import sample_dso
 
 def make_toy_scenario() -> MarketScenario:
     """Prepare a tiny hand-solvable CLS example.
@@ -12,10 +15,28 @@ def make_toy_scenario() -> MarketScenario:
     TODO S04: Record expected optimum in docs/04_HAND_CALCULATIONS.md.
     TODO S05: Keep all inputs deterministic until the basic tests pass.
     """
-    a = Aggregator(
-        aggregator_id="Agg 1", p_min_kw=100, p_nom_kw=150, true_cost=cost_a, offer_cost=cost_a)
-    b = Aggregator(100.0, 150.0, 100.0, 100.0)
-    m = MarketScenario()
+
+def make_random_scenario(seed: int = 187) -> MarketScenario:
+    """
+    Generate a reproducible random CLS market scenario.
+
+    Randomly selects 1–25 aggregators and one DSO from the
+    synthetic datasets, including their respective cost curves.
+
+    Args:
+        seed (int): Random seed for reproducible market selection.
+
+    Returns:
+        MarketScenario: A market containing the selected
+        aggregators and DSO.
+    """
+
+    value = random.Random(seed).randint(1, 25)
+
+    aggregators = sample_aggregators(value, seed=seed)
+    dso = sample_dso(seed=seed)
+
+    return MarketScenario("Test scenario", aggregators, dso)
 
 def make_scarcity_scenarios() -> list[MarketScenario]:
     """Change market concentration and flexibility while controlling costs.
