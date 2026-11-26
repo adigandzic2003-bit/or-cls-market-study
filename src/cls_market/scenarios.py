@@ -1,7 +1,6 @@
 """Reproducible toy markets first; controlled scarcity scenarios later."""
 
 import random
-from operator import truediv
 
 from .models import MarketScenario
 from .aggregator_data import sample_aggregators
