@@ -51,5 +51,5 @@ def solve_allocation(scenario: MarketScenario) -> Allocation:
     # Convert optimized results back into our model
     optimized_limits = dict(zip(ids, result.x))
 
-    # TODO 6: Return an Allocation object
-    return ...
+    return Allocation(limits_kw=optimized_limits, reported_objective_eur=float(result.fun),
+                      solver_message=str(result.message))
