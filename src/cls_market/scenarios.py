@@ -64,3 +64,14 @@ def is_compatible(market: MarketScenario) -> bool:
     print("DSO network limit:", network_limit_kw)
 
     return total_minimum_kw <= network_limit_kw <= total_nominal_kw
+
+def make_compatible_scenario(seed: int = 187) -> MarketScenario:
+    """Prepare a hand-solvable CLS market scenario."""
+
+    for candidate_seed in range(seed, seed + 1000):
+
+        market = make_random_scenario(candidate_seed)
+        if is_compatible(market):
+            return market
+
+    raise ValueError("No compatible market found")
